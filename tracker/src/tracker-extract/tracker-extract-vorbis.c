@@ -32,6 +32,8 @@
 
 #include <libtracker-extract/tracker-extract.h>
 
+#include "tracker-media-art.h"
+
 typedef struct {
 	const gchar *creator;
 	gchar *creator_uri;
@@ -93,7 +95,7 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 	VorbisData vd = { 0 };
 	MergeData md = { 0 };
 	FILE *f;
-	gchar *filename;
+    gchar *filename, *uri;
 	OggVorbis_File vf;
 	vorbis_comment *comment;
 	vorbis_info *vi;
@@ -498,6 +500,16 @@ tracker_extract_get_metadata (TrackerExtractInfo *info)
 		tracker_sparql_builder_predicate (metadata, "nfo:duration");
 		tracker_sparql_builder_object_int64 (metadata, (gint64) time);
 	}
+
+    uri = g_file_get_uri (file);
+    tracker_media_art_process (NULL,
+                               NULL,
+                               NULL,
+                               TRACKER_MEDIA_ART_ALBUM,
+                               vd.performer,
+                               vd.album,
+                               uri);
+    g_free (uri);
 
 	g_free (vd.artist);
 	g_free (vd.album_artist);
