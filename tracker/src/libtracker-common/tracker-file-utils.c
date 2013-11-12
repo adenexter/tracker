@@ -34,6 +34,10 @@
 #include <limits.h>
 #include <errno.h>
 
+#include <inttypes.h>
+#include <sys/ioctl.h>
+#include <linux/msdos_fs.h>
+
 #ifdef __linux__
 #include <sys/statfs.h>
 #endif
@@ -850,6 +854,18 @@ tracker_file_is_hidden (GFile *file)
 		/* Check if GIO says the file is hidden */
 		is_hidden = g_file_info_get_is_hidden (file_info);
 		g_object_unref (file_info);
+	}
+
+	if (!is_hidden) {
+		int fd;
+		gchar *path = g_file_get_path (file);
+		if (path && (fd = open (path, O_RDONLY)) >= 0) {
+			__u32 attributes = 0;
+			ioctl(fd, FAT_IOCTL_GET_ATTRIBUTES, &attributes);
+			if (attributes & ATTR_HIDDEN)
+				is_hidden = TRUE;
+			close (fd);
+		}
 	}
 
 	return is_hidden;
